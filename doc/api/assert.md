@@ -804,10 +804,8 @@ are recursively evaluated also by the following rules.
 * [`Map`][] keys and [`Set`][] items are compared unordered.
 * Recursion stops when both sides differ or both sides encounter a circular
   reference.
-* [`WeakMap`][] and [`WeakSet`][] instances are **not** compared structurally.
-  They are only equal if they reference the same object. Any comparison between
-  different `WeakMap` or `WeakSet` instances will result in inequality,
-  even if they contain the same entries.
+* [`WeakMap`][] and [`WeakSet`][] comparison does not rely on their values. See
+  below for further details.
 * [`RegExp`][] lastIndex, flags, and source are always compared, even if these
   are not enumerable properties.
 
@@ -884,40 +882,23 @@ assert.deepStrictEqual({ [symbol1]: 1 }, { [symbol2]: 1 });
 // }
 
 const weakMap1 = new WeakMap();
-const weakMap2 = new WeakMap();
-const obj = {};
+const weakMap2 = new WeakMap([[{}, {}]]);
+const weakMap3 = new WeakMap();
+weakMap3.unequal = true;
 
-weakMap1.set(obj, 'value');
-weakMap2.set(obj, 'value');
-
-// Comparing different instances fails, even with same contents
 assert.deepStrictEqual(weakMap1, weakMap2);
-// AssertionError: Values have same structure but are not reference-equal:
-//
-// WeakMap {
-//   <items unknown>
-// }
+// OK, because it is impossible to compare the entries
 
-// Comparing the same instance to itself succeeds
-assert.deepStrictEqual(weakMap1, weakMap1);
-// OK
-
-const weakSet1 = new WeakSet();
-const weakSet2 = new WeakSet();
-weakSet1.add(obj);
-weakSet2.add(obj);
-
-// Comparing different instances fails, even with same contents
-assert.deepStrictEqual(weakSet1, weakSet2);
+// Fails because weakMap3 has a property that weakMap1 does not contain:
+assert.deepStrictEqual(weakMap1, weakMap3);
 // AssertionError: Expected inputs to be strictly deep-equal:
 // + actual - expected
 //
-// + WeakSet { <items unknown> }
-// - WeakSet { <items unknown> }
-
-// Comparing the same instance to itself succeeds
-assert.deepStrictEqual(weakSet1, weakSet1);
-// OK
+//   WeakMap {
+// +   [items unknown]
+// -   [items unknown],
+// -   unequal: true
+//   }
 ```
 
 ```cjs
@@ -993,40 +974,23 @@ assert.deepStrictEqual({ [symbol1]: 1 }, { [symbol2]: 1 });
 // }
 
 const weakMap1 = new WeakMap();
-const weakMap2 = new WeakMap();
-const obj = {};
+const weakMap2 = new WeakMap([[{}, {}]]);
+const weakMap3 = new WeakMap();
+weakMap3.unequal = true;
 
-weakMap1.set(obj, 'value');
-weakMap2.set(obj, 'value');
-
-// Comparing different instances fails, even with same contents
 assert.deepStrictEqual(weakMap1, weakMap2);
-// AssertionError: Values have same structure but are not reference-equal:
-//
-// WeakMap {
-//   <items unknown>
-// }
+// OK, because it is impossible to compare the entries
 
-// Comparing the same instance to itself succeeds
-assert.deepStrictEqual(weakMap1, weakMap1);
-// OK
-
-const weakSet1 = new WeakSet();
-const weakSet2 = new WeakSet();
-weakSet1.add(obj);
-weakSet2.add(obj);
-
-// Comparing different instances fails, even with same contents
-assert.deepStrictEqual(weakSet1, weakSet2);
+// Fails because weakMap3 has a property that weakMap1 does not contain:
+assert.deepStrictEqual(weakMap1, weakMap3);
 // AssertionError: Expected inputs to be strictly deep-equal:
 // + actual - expected
 //
-// + WeakSet { <items unknown> }
-// - WeakSet { <items unknown> }
-
-// Comparing the same instance to itself succeeds
-assert.deepStrictEqual(weakSet1, weakSet1);
-// OK
+//   WeakMap {
+// +   [items unknown]
+// -   [items unknown],
+// -   unequal: true
+//   }
 ```
 
 If the values are not equal, an [`AssertionError`][] is thrown with a `message`
